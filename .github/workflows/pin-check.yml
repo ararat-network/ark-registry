@@ -1,0 +1,52 @@
+name: pin-check
+
+# Weekly, and on demand: does ark's newest chain tag change what this
+# registry says? The committed files are generated at ARK_VERSION; this job
+# regenerates at the newest v* tag instead and fails if anything differs, so
+# a forgotten bump after a chain release shows within a week. It holds no
+# token and opens nothing: the bump is a pull request a person makes.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest:
+    name: Regenerate at ark's newest tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: tags
+        name: Resolve the pinned and the newest chain tag
+        run: |
+          pinned=$(cat ARK_VERSION)
+          newest=$(git ls-remote --tags --refs https://github.com/ararat-network/ark.git 'refs/tags/v*' \
+            | awk -F/ '{print $NF}' | sort -V | tail -n 1)
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "newest=$newest" >> "$GITHUB_OUTPUT"
+          echo "pinned $pinned, newest $newest"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ararat-network/ark
+          ref: ${{ steps.tags.outputs.newest }}
+          path: chain
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: chain/go.mod
+          cache-dependency-path: chain/go.sum
+      - name: Regenerate at the newest tag
+        working-directory: chain
+        run: go run ./contrib/registry --out "$GITHUB_WORKSPACE/out" --endpoints "$GITHUB_WORKSPACE/endpoints.json" --version "${{ steps.tags.outputs.newest }}"
+      - name: Compare
+        run: |
+          status=0
+          for d in ark arktestnet arklocal images; do
+            diff -r "out/$d" "$d" || status=1
+          done
+          if [ "$status" -ne 0 ]; then
+            echo "::error::ark ${{ steps.tags.outputs.newest }} changes the registry; ARK_VERSION is ${{ steps.tags.outputs.pinned }}. Move the pin and regenerate."
+          fi
+          exit "$status"
