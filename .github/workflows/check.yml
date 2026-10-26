@@ -1,0 +1,45 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  generated:
+    name: Generated files match ark at ARK_VERSION
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: version
+        run: echo "ref=$(cat ARK_VERSION)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ararat-network/ark
+          ref: ${{ steps.version.outputs.ref }}
+          path: ark
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: ark/go.mod
+          cache-dependency-path: ark/go.sum
+      - name: Regenerate
+        working-directory: ark
+        run: go run ./contrib/registry --out "$GITHUB_WORKSPACE/out" --endpoints "$GITHUB_WORKSPACE/endpoints.json" --version "${{ steps.version.outputs.ref }}"
+      - name: Compare
+        run: |
+          for d in ark arktestnet arklocal images; do
+            diff -r "out/$d" "$d"
+          done
+  schema:
+    name: Standard files validate against the community schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: npm install --no-save --no-audit --no-fund ajv@8 ajv-formats@3
+      - run: node validate.cjs .

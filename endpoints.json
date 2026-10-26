@@ -1,0 +1,16 @@
+{
+  "ark": {
+    "rpc": [],
+    "rest": [],
+    "grpc": [],
+    "explorers": [],
+    "indexer": []
+  },
+  "arktestnet": {
+    "rpc": [],
+    "rest": [],
+    "grpc": [],
+    "explorers": [],
+    "indexer": []
+  }
+}
