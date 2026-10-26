@@ -1,9 +1,7 @@
 # ark-registry
 
 The network registry for [Ark](https://github.com/ararat-network/ark): one description of every Ark network that the
-app, the SDK, the explorer, and any wallet read instead of keeping their own. The
-[tooling direction](https://github.com/ararat-network/ark/blob/main/docs/direction/TOOLING_DIRECTION.md#2-establish-a-canonical-network-registry)
-says what it is for.
+app, the SDK, the explorer, and any wallet read instead of keeping their own.
 
 | Path | Holds | Maintained |
 | --- | --- | --- |
