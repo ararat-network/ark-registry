@@ -32,6 +32,8 @@ go run ./contrib/registry --out ../ark-registry --endpoints ../ark-registry/endp
 
 The check workflow does the same on every push and pull request and fails if the committed files differ. To change
 an endpoint, edit `endpoints.json` and regenerate; to move to a new chain release, change `ARK_VERSION` and regenerate.
+A weekly pin check regenerates at `ark`'s newest chain tag instead and fails if that would change the files, so a
+release whose bump was forgotten shows within a week; it holds no token and opens nothing.
 
 ## For a consumer
 
