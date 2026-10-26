@@ -20,13 +20,14 @@ jobs:
         with:
           repository: ararat-network/ark
           ref: ${{ steps.version.outputs.ref }}
-          path: ark
+          # Not "ark": that is the mainnet entry's directory.
+          path: chain
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version-file: ark/go.mod
-          cache-dependency-path: ark/go.sum
+          go-version-file: chain/go.mod
+          cache-dependency-path: chain/go.sum
       - name: Regenerate
-        working-directory: ark
+        working-directory: chain
         run: go run ./contrib/registry --out "$GITHUB_WORKSPACE/out" --endpoints "$GITHUB_WORKSPACE/endpoints.json" --version "${{ steps.version.outputs.ref }}"
       - name: Compare
         run: |
